@@ -1,5 +1,6 @@
 const Category = require('../models/Category')
 const Bank = require('../models/Bank')
+const Feature = require('../models/Feature')
 const Item = require('../models/Item')
 const Image = require('../models/Image')
 const fs = require('fs-extra')
@@ -37,7 +38,7 @@ module.exports = {
             req.flash('alertStatus', 'success')
             res.redirect('/admin/category')
         } catch (error){
-            req.flash('alertStatus', `error ${error.message}`)
+            req.flash('alertStatus', `${error.message}`)
             req.flash('alertStatus', 'danger')
             res.redirect('/admin/category')
         }
@@ -53,7 +54,7 @@ module.exports = {
             req.flash('alertStatus', 'success')
             res.redirect('/admin/category')
         } catch (error) {
-            req.flash('alertStatus', `error ${error.message}`)
+            req.flash('alertStatus', `${error.message}`)
             req.flash('alertStatus', 'danger')
             res.redirect('/admin/category')
         }
@@ -68,7 +69,7 @@ module.exports = {
             req.flash('alertStatus', 'success')
             res.redirect('/admin/category')
         } catch (error) {
-            req.flash('alertStatus', `error ${error.message}`)
+            req.flash('alertStatus', `${error.message}`)
             req.flash('alertStatus', 'danger')
             res.redirect('/admin/category')
         }
@@ -86,7 +87,7 @@ module.exports = {
                 bank
             })
         } catch (error) {
-            req.flash('alertStatus', `error ${error.message}`)
+            req.flash('alertStatus', `${error.message}`)
             req.flash('alertStatus', 'danger')
             res.redirect('/admin/bank')
         }
@@ -105,7 +106,7 @@ module.exports = {
             req.flash('alertStatus', 'success')
             res.redirect('/admin/bank')
         } catch (error) {
-            req.flash('alertStatus', `error ${error.message}`)
+            req.flash('alertStatus', `${error.message}`)
             req.flash('alertStatus', 'danger')
             res.redirect('/admin/bank')
         }
@@ -136,7 +137,7 @@ module.exports = {
             }
             
         } catch (error) {
-            req.flash('alertStatus', `error ${error.message}`)
+            req.flash('alertStatus', `${error.message}`)
             req.flash('alertStatus', 'danger')
             res.redirect('/admin/bank')
         }
@@ -152,7 +153,7 @@ module.exports = {
             req.flash('alertStatus', 'success')
             res.redirect('/admin/bank')
         } catch (error) {
-            req.flash('alertStatus', `error ${error.message}`)
+            req.flash('alertStatus', `${error.message}`)
             req.flash('alertStatus', 'danger')
             res.redirect('/admin/bank')
         }
@@ -175,7 +176,7 @@ module.exports = {
                 action: 'view'
             })
         } catch (error) {
-            req.flash('alertStatus', `error ${error.message}`)
+            req.flash('alertStatus', `${error.message}`)
             req.flash('alertStatus', 'danger')
             res.redirect('/admin/item')
         }
@@ -206,7 +207,7 @@ module.exports = {
                 res.redirect('/admin/item')
             }
         } catch (error) {
-            req.flash('alertStatus', `error ${error.message}`)
+            req.flash('alertStatus', `${error.message}`)
             req.flash('alertStatus', 'danger')
             res.redirect('/admin/item')
         }
@@ -227,7 +228,7 @@ module.exports = {
                 action: 'show image'
             })
         } catch (error) {
-            req.flash('alertStatus', `error ${error.message}`)
+            req.flash('alertStatus', `${error.message}`)
             req.flash('alertStatus', 'danger')
             res.redirect('/admin/item')
         }
@@ -251,7 +252,7 @@ module.exports = {
                 action: 'edit'
             })
         } catch (error) {
-            req.flash('alertStatus', `error ${error.message}`)
+            req.flash('alertStatus', `${error.message}`)
             req.flash('alertStatus', 'danger')
             res.redirect('/admin/item')
         }
@@ -293,7 +294,7 @@ module.exports = {
                     res.redirect('/admin/item')
                 }
         } catch (error) {
-            req.flash('alertStatus', `error ${error.message}`)
+            req.flash('alertStatus', `${error.message}`)
             req.flash('alertStatus', 'danger')
             res.redirect('/admin/item')
         }
@@ -308,7 +309,7 @@ module.exports = {
                     fs.unlink(path.join(`public/${image.imageUrl}`))
                     image.remove()
                 }).catch((error) => {
-                    req.flash('alertStatus', `error ${error.message}`)
+                    req.flash('alertStatus', `${error.message}`)
                     req.flash('alertStatus', 'danger')
                     res.redirect('/admin/item')
                 });
@@ -318,9 +319,108 @@ module.exports = {
             req.flash('alertStatus', 'success')
             res.redirect('/admin/item')
         } catch (error) {
-            req.flash('alertStatus', `error ${error.message}`)
+            req.flash('alertStatus', `${error.message}`)
             req.flash('alertStatus', 'danger')
             res.redirect('/admin/item')
+        }
+    },
+
+    viewDetailItem: async (req, res) => {
+        const {itemId} = req.params
+        try {
+            const alertMessage = req.flash('alertMessage')
+            const alertStatus = req.flash('alertStatus')
+            const alert = {message: alertMessage, status: alertStatus}
+            const feature = await Feature.find({itemId: itemId})
+            res.render('admin/item/detail_item/view_detail_item', {
+                title: 'Staycation | Detail Item',
+                alert,
+                itemId,
+                feature
+            })
+        } catch (error) {
+            req.flash('alertStatus', `${error.message}`)
+            req.flash('alertStatus', 'danger')
+            res.redirect(`/admin/item/show-detail-item/${itemId}`)
+        }
+    },
+
+    addFeature: async (req, res) => {
+        const {name, qty, itemId} = req.body
+        try {
+            if(!req.file){
+                req.flash('alertMessage', 'Image not found')
+                req.flash('alertStatus', 'danger')
+                res.redirect(`/admin/item/show-detail-item/${itemId}`)
+            }
+            const feature = await Feature.create({
+                name,
+                qty,
+                itemId,
+                imageUrl: `images/${req.file.filename}`
+            })
+            const item = await Item.findOne({_id: itemId})
+            item.featureId.push({_id: feature._id})
+            await item.save()
+            req.flash('alertMessage', 'Success add feature')
+            req.flash('alertStatus', 'success')
+            res.redirect(`/admin/item/show-detail-item/${itemId}`)
+        } catch (error) {
+            req.flash('alertStatus', `${error.message}`)
+            req.flash('alertStatus', 'danger')
+            res.redirect(`/admin/item/show-detail-item/${itemId}`)
+        }
+    },
+
+    editFeature: async (req, res) => {
+        const {id, name, qty, itemId} = req.body
+        try {
+            const feature = await Feature.findOne({_id: id})
+            if(req.file == undefined) {
+                feature.name = name
+                feature.qty = qty
+                await feature.save()
+                req.flash('alertMessage', 'Success update feature')
+                req.flash('alertStatus', 'success')
+                res.redirect(`/admin/item/show-detail-item/${itemId}`)
+            } else {
+                await fs.unlink(path.join(`public/${feature.imageUrl}`))
+                feature.name = name
+                feature.qty = qty
+                feature.imageUrl = `images/${req.file.filename}`
+                await feature.save()
+                req.flash('alertMessage', 'Success update feature')
+                req.flash('alertStatus', 'success')
+                res.redirect(`/admin/item/show-detail-item/${itemId}`)
+            }
+            
+        } catch (error) {
+            req.flash('alertStatus', `${error.message}`)
+            req.flash('alertStatus', 'danger')
+            res.redirect(`/admin/item/show-detail-item/${itemId}`)
+        }
+    },
+
+    deleteFeature : async (req, res) => {
+        try {
+            const {id, itemId} = req.params
+            const feature = await Feature.findOne({_id: id})
+            const item = await Item.findOne({_id: itemId}).populate('featureId')
+            for(let i = 0; i < item.featureId.length; i++){
+                if(item.featureId[i]._id.toString() === feature._id.toString()){
+                    item.featureId.pull({_id: feature._id})
+                    await item.save()
+                }
+            }
+            await fs.unlink(path.join(`public/${feature.imageUrl}`))
+            await feature.remove()
+            req.flash('alertMessage', 'Success delete feature')
+            req.flash('alertStatus', 'success')
+            res.redirect(`/admin/item/show-detail-item/${itemId}`)
+        } catch (error) {
+            req.flash('alertStatus', `${error.message}`)
+            req.flash('alertStatus', 'danger')
+            res.redirect(`/admin/item/show-detail-item/${itemId}`)
         }
     },
 
