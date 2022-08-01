@@ -58,13 +58,9 @@ const bookingSchema = new mongoose.Schema({
             type: String,
             required: true
         },
-        imageUrl: {
-            type: String,
-            required: true
-        },
         status: {
             type: String,
-            required: true
+            default: 'Proses'
         },
     }
 })
