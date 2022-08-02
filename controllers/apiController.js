@@ -2,6 +2,7 @@ const Item = require('../models/Item')
 const Treasure = require('../models/Activity')
 const Traveler = require('../models/Booking')
 const Category = require('../models/Category')
+const Bank = require('../models/Bank')
 
 module.exports = {
     landingPage: async (req, res) => {
@@ -43,6 +44,16 @@ module.exports = {
                 }
             }
 
+            const testimonial = {
+                _id: 'asd1293uasdads1',
+                imageUrl: 'images/testimonial2.jpg',
+                name: 'Happy Familiy',
+                rate: 4.55,
+                content: 'What a great trip with my family and I should try again next time soon ...',
+                familyName: 'Angga',
+                familyOccupation: 'Product Designer'
+            }
+
             res.status(200).json({
                 hero: {
                     travelers: traveler.length,
@@ -50,11 +61,42 @@ module.exports = {
                     cities: city.length
                 },
                 mostPicked,
-                category
+                category,
+                testimonial
             })
             
         } catch (error) {
             res.status(500).json({message: 'intenal server error'})
+        }
+    },
+
+    detailPage: async (req, res) => {
+        try {
+            const {id} = req.params
+            const item = await Item.findOne({_id: id})
+            .populate({path: 'featureId', select: '_id name imageUrl qty'})
+            .populate({path: 'activityId', select: '_id name imageUrl type'})
+            .populate({path: 'imageId', select: '_id imageUrl'})
+
+            const bank = await Bank.find()
+
+            const testimonial = {
+                _id: 'asd1293uasdads1',
+                imageUrl: 'images/testimonial1.jpg',
+                name: 'Happy Familiy',
+                rate: 4.55,
+                content: 'What a great trip with my family and I should try again next time soon ...',
+                familyName: 'Angga',
+                familyOccupation: 'Product Designer'
+            }
+
+            res.status(200).json({
+                ...item._doc,
+                bank,
+                testimonial
+            })
+        } catch (error) {
+            
         }
     }
 }
